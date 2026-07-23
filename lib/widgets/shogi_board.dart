@@ -121,7 +121,7 @@ class _BattlePiece extends StatelessWidget {
             style: const TextStyle(color: Colors.white, fontSize: 9),
           ),
           Text(
-            pieceLabel(piece.type),
+            battlePieceLabel(piece),
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,

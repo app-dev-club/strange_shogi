@@ -21,11 +21,14 @@ class GameRules {
     required Position to,
     required List<Piece> pieces,
     required Map<PlayerId, Hand> hands,
+    bool promote = false,
   }) {
     final captured = pieces.where((p) => p.position == to).firstOrNull;
     final nextPieces =
         pieces.where((p) => p.id != piece.id && p.id != captured?.id).toList()
-          ..add(piece.copyWith(position: to));
+          ..add(
+            piece.copyWith(position: to, promoted: piece.promoted || promote),
+          );
     final nextHands = _copyHands(hands);
     if (captured != null && captured.type != PieceType.king) {
       nextHands[piece.owner] = Hand([

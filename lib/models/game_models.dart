@@ -94,19 +94,23 @@ class Piece {
     required this.type,
     required this.owner,
     required this.position,
+    this.promoted = false,
   });
 
   final String id;
   final PieceType type;
   final PlayerId owner;
   final Position position;
+  final bool promoted;
 
-  Piece copyWith({PlayerId? owner, Position? position}) => Piece(
-    id: id,
-    type: type,
-    owner: owner ?? this.owner,
-    position: position ?? this.position,
-  );
+  Piece copyWith({PlayerId? owner, Position? position, bool? promoted}) =>
+      Piece(
+        id: id,
+        type: type,
+        owner: owner ?? this.owner,
+        position: position ?? this.position,
+        promoted: promoted ?? this.promoted,
+      );
 }
 
 class Formation {

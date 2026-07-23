@@ -6,6 +6,7 @@ import 'package:strange_shogi/game/drop_generator.dart';
 import 'package:strange_shogi/game/formation_validator.dart';
 import 'package:strange_shogi/game/game_rules.dart';
 import 'package:strange_shogi/game/move_generator.dart';
+import 'package:strange_shogi/game/promotion_rules.dart';
 import 'package:strange_shogi/models/game_models.dart';
 
 void main() {
@@ -181,6 +182,42 @@ void main() {
       );
     });
 
+    test('龍は飛車の動きに加えて斜めへ1マス動ける', () {
+      const dragon = Piece(
+        id: 'r',
+        type: PieceType.rook,
+        owner: PlayerId.player1,
+        position: Position(3, 4),
+        promoted: true,
+      );
+      final destinations = moves.legalDestinations(
+        board: board,
+        piece: dragon,
+        pieces: const [dragon],
+        forward: -1,
+      );
+      expect(destinations, contains(const Position(2, 3)));
+      expect(destinations, isNot(contains(const Position(1, 2))));
+    });
+
+    test('と金は金と同じ動きをする', () {
+      const promotedPawn = Piece(
+        id: 'p',
+        type: PieceType.pawn,
+        owner: PlayerId.player1,
+        position: Position(3, 4),
+        promoted: true,
+      );
+      final destinations = moves.legalDestinations(
+        board: board,
+        piece: promotedPawn,
+        pieces: const [promotedPawn],
+        forward: -1,
+      );
+      expect(destinations, contains(const Position(3, 5)));
+      expect(destinations, isNot(contains(const Position(2, 5))));
+    });
+
     test('取得した駒が持ち駒になり、王取得で勝敗が決まる', () {
       const attacker = Piece(
         id: 'r',
@@ -269,6 +306,106 @@ void main() {
       );
       expect(legal.where((p) => p.x == 2), isEmpty);
       expect(legal.where((p) => p.y == 0), isEmpty);
+    });
+
+    test('成った歩は二歩の判定に含めない', () {
+      const dropper = DropGenerator();
+      const promotedPawn = Piece(
+        id: 'p',
+        type: PieceType.pawn,
+        owner: PlayerId.player1,
+        position: Position(2, 3),
+        promoted: true,
+      );
+      final legal = dropper.legalDrops(
+        board: board,
+        type: PieceType.pawn,
+        owner: PlayerId.player1,
+        pieces: const [promotedPawn],
+        forward: -1,
+      );
+      expect(legal.where((p) => p.x == 2), isNotEmpty);
+    });
+  });
+
+  group('成り', () {
+    const rules = PromotionRules();
+
+    test('敵陣3段への侵入または敵陣からの移動で任意に成れる', () {
+      const entering = Piece(
+        id: 's1',
+        type: PieceType.silver,
+        owner: PlayerId.player1,
+        position: Position(3, 3),
+      );
+      const leaving = Piece(
+        id: 's2',
+        type: PieceType.silver,
+        owner: PlayerId.player1,
+        position: Position(3, 2),
+      );
+      expect(
+        rules.choice(piece: entering, to: const Position(3, 2), forward: -1),
+        PromotionChoice.optional,
+      );
+      expect(
+        rules.choice(piece: leaving, to: const Position(3, 3), forward: -1),
+        PromotionChoice.optional,
+      );
+    });
+
+    test('歩と香車は最終段、桂馬は最終2段で強制的に成る', () {
+      for (final type in [PieceType.pawn, PieceType.lance]) {
+        expect(
+          rules.choice(
+            piece: Piece(
+              id: type.name,
+              type: type,
+              owner: PlayerId.player1,
+              position: const Position(3, 1),
+            ),
+            to: const Position(3, 0),
+            forward: -1,
+          ),
+          PromotionChoice.required,
+        );
+      }
+      expect(
+        rules.choice(
+          piece: const Piece(
+            id: 'n',
+            type: PieceType.knight,
+            owner: PlayerId.player1,
+            position: Position(3, 3),
+          ),
+          to: const Position(2, 1),
+          forward: -1,
+        ),
+        PromotionChoice.required,
+      );
+    });
+
+    test('成駒を取ると生駒として持ち駒に戻る', () {
+      const attacker = Piece(
+        id: 'r',
+        type: PieceType.rook,
+        owner: PlayerId.player1,
+        position: Position(0, 0),
+      );
+      const promotedPawn = Piece(
+        id: 'p',
+        type: PieceType.pawn,
+        owner: PlayerId.player2,
+        position: Position(0, 1),
+        promoted: true,
+      );
+      final result = const GameRules().movePiece(
+        piece: attacker,
+        to: promotedPawn.position,
+        pieces: const [attacker, promotedPawn],
+        hands: const {PlayerId.player1: Hand([]), PlayerId.player2: Hand([])},
+      );
+      expect(result.hands[PlayerId.player1]!.pieces, [PieceType.pawn]);
     });
   });
 

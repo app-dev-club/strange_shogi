@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../data/piece_definitions.dart';
 import '../game/formation_validator.dart';
+import '../game/promotion_rules.dart';
 import '../models/game_models.dart';
 import '../providers/game_controller.dart';
 import '../widgets/shogi_board.dart';
@@ -377,6 +378,33 @@ class _BattleView extends StatelessWidget {
   final GameState state;
   final GameController controller;
 
+  Future<void> _onBoardTap(BuildContext context, Position position) async {
+    final choice = controller.promotionChoiceFor(position);
+    if (choice == PromotionChoice.optional) {
+      final promote = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('駒を成りますか？'),
+          content: const Text('成ると駒の動きが変わります。'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('成らない'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('成る'),
+            ),
+          ],
+        ),
+      );
+      if (promote == null) return;
+      controller.selectBoardCell(position, promote: promote);
+      return;
+    }
+    controller.selectBoardCell(position);
+  }
+
   @override
   Widget build(BuildContext context) {
     final current = state.currentTurn;
@@ -403,7 +431,7 @@ class _BattleView extends StatelessWidget {
           highlighted: controller.legalTargets,
           selected: state.selectedBoardPosition,
           lastMove: state.lastMove,
-          onTap: controller.selectBoardCell,
+          onTap: (position) => _onBoardTap(context, position),
         ),
         _PlayerHand(
           label: '${_playerName(state.firstPlayer)}（先手）の持ち駒',

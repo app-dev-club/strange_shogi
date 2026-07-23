@@ -20,6 +20,7 @@ class DropGenerator {
             (p) =>
                 p.owner == owner &&
                 p.type == PieceType.pawn &&
+                !p.promoted &&
                 p.position.x == target.x,
           )) {
         return false;

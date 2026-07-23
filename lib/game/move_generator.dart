@@ -12,7 +12,7 @@ class MoveGenerator {
   }) {
     final result = <Position>{};
     final occupied = {for (final item in pieces) item.position: item};
-    for (final pattern in pieceDefinitions[piece.type]!.patterns) {
+    for (final pattern in movementPatterns(piece)) {
       final dx = pattern.dx;
       final dy = pattern.dy * forward;
       var distance = 1;

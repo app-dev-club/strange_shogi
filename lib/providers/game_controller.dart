@@ -7,6 +7,7 @@ import '../game/drop_generator.dart';
 import '../game/formation_validator.dart';
 import '../game/game_rules.dart';
 import '../game/move_generator.dart';
+import '../game/promotion_rules.dart';
 import '../models/game_models.dart';
 
 final gameControllerProvider = NotifierProvider<GameController, GameState>(
@@ -19,6 +20,7 @@ class GameController extends Notifier<GameState> {
   static const _moveGenerator = MoveGenerator();
   static const _dropGenerator = DropGenerator();
   static const _rules = GameRules();
+  static const _promotionRules = PromotionRules();
 
   @override
   GameState build() => _newState();
@@ -243,7 +245,21 @@ class GameController extends Notifier<GameState> {
     return const {};
   }
 
-  void selectBoardCell(Position position) {
+  PromotionChoice promotionChoiceFor(Position position) {
+    final from = state.selectedBoardPosition;
+    if (from == null || !legalTargets.contains(position)) {
+      return PromotionChoice.none;
+    }
+    final piece = _pieceAt(from);
+    if (piece == null) return PromotionChoice.none;
+    return _promotionRules.choice(
+      piece: piece,
+      to: position,
+      forward: forwardFor(piece.owner),
+    );
+  }
+
+  void selectBoardCell(Position position, {bool promote = false}) {
     if (state.phase != GamePhase.playing || state.winner != null) return;
     final legal = legalTargets;
     if (state.selectedHandIndex != null && legal.contains(position)) {
@@ -259,12 +275,16 @@ class GameController extends Notifier<GameState> {
     }
     if (state.selectedBoardPosition != null && legal.contains(position)) {
       final piece = _pieceAt(state.selectedBoardPosition!)!;
+      final promotionChoice = promotionChoiceFor(position);
       _finishTurn(
         _rules.movePiece(
           piece: piece,
           to: position,
           pieces: state.boardPieces,
           hands: state.hands,
+          promote:
+              promotionChoice == PromotionChoice.required ||
+              (promotionChoice == PromotionChoice.optional && promote),
         ),
       );
       return;

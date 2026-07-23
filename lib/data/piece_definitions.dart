@@ -105,3 +105,44 @@ const pieceDefinitions = <PieceType, PieceDefinition>{
 };
 
 String pieceLabel(PieceType type) => pieceDefinitions[type]!.label;
+
+bool canPromote(PieceType type) =>
+    type != PieceType.king && type != PieceType.gold;
+
+String battlePieceLabel(Piece piece) {
+  if (!piece.promoted) return pieceLabel(piece.type);
+  return switch (piece.type) {
+    PieceType.rook => '龍',
+    PieceType.bishop => '馬',
+    PieceType.silver => '全',
+    PieceType.knight => '圭',
+    PieceType.lance => '杏',
+    PieceType.pawn => 'と',
+    PieceType.king || PieceType.gold => pieceLabel(piece.type),
+  };
+}
+
+List<MovementPattern> movementPatterns(Piece piece) {
+  if (!piece.promoted) return pieceDefinitions[piece.type]!.patterns;
+  return switch (piece.type) {
+    PieceType.rook => [
+      ...pieceDefinitions[PieceType.rook]!.patterns,
+      const MovementPattern(-1, -1),
+      const MovementPattern(1, -1),
+      const MovementPattern(-1, 1),
+      const MovementPattern(1, 1),
+    ],
+    PieceType.bishop => [
+      ...pieceDefinitions[PieceType.bishop]!.patterns,
+      const MovementPattern(0, -1),
+      const MovementPattern(0, 1),
+      const MovementPattern(-1, 0),
+      const MovementPattern(1, 0),
+    ],
+    PieceType.silver ||
+    PieceType.knight ||
+    PieceType.lance ||
+    PieceType.pawn => pieceDefinitions[PieceType.gold]!.patterns,
+    PieceType.king || PieceType.gold => pieceDefinitions[piece.type]!.patterns,
+  };
+}
