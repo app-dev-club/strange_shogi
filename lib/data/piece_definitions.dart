@@ -93,7 +93,7 @@ const pieceDefinitions = <PieceType, PieceDefinition>{
   PieceType.lance: PieceDefinition(
     type: PieceType.lance,
     label: '香',
-    cost: 1,
+    cost: 2,
     patterns: [MovementPattern(0, 1, sliding: true)],
   ),
   PieceType.pawn: PieceDefinition(

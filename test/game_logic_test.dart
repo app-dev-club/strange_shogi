@@ -52,6 +52,15 @@ void main() {
       expect(const FormationValidator().isValid(formation), isFalse);
     });
 
+    test('香車は2ポイント、歩は1ポイントとして計算する', () {
+      const formation = Formation({
+        PieceType.king: 1,
+        PieceType.lance: 1,
+        PieceType.pawn: 1,
+      });
+      expect(const FormationValidator().points(formation), 3);
+    });
+
     test('王を持ち駒にすると無効、王以外はすべて持ち駒にできる', () {
       final board = generator.generate(4);
       final side = ArmySideDefinition.fromBoard(board, ArmySide.a);
